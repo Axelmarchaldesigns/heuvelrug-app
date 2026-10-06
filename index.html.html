@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="color-scheme" content="light">
+<title>Heuvelrug Raamdecoratie — Werkbeheer</title>
+<style>
+  :root{
+    --olive: #7a6a3f;
+    --olive-dark: #3f3520;
+    --gold: #c99a3f;
+    --gold-light: #f3dfa8;
+    --cream: #fbf8f2;
+    --paper: #ffffff;
+    --ink: #2b2620;
+    --ink-soft: #7a7166;
+    --line: #ece3d0;
+    --red: #b5533b;
+    --green: #5c7a4a;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --tapbar-h: 64px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{color-scheme:light;background:#fbf8f2;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream) !important;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;}
+  #app{max-width:900px;margin:0 auto;padding:0 0 calc(var(--tapbar-h) + 18px);background:var(--cream);}
+  .sans{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  main{padding:18px 16px 10px;background:var(--cream);}
+
+  header.top{background:var(--olive-dark);color:var(--gold-light);padding:18px 18px 16px;}
+  header.top h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-0.01em;}
+  header.top .sub{font-size:12px;color:var(--gold-light);opacity:.7;margin-top:3px;}
+
+  /* Bottom tab bar — thumb-reachable on phone */
+  nav.tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    display:flex;background:var(--paper);
+    border-top:1px solid var(--line);
+    box-shadow:0 -2px 12px rgba(0,0,0,.06);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabs button{
+    flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    background:none;border:none;color:var(--ink-soft);
+    padding:9px 2px 8px;font-size:10.5px;cursor:pointer;min-height:var(--tapbar-h);
+  }
+  nav.tabs button .ic{font-size:21px;line-height:1;}
+  nav.tabs button.active{color:var(--olive-dark);font-weight:700;}
+  nav.tabs button.active .ic{transform:translateY(-1px);}
+
+  main{padding:18px 16px 10px;}
+  section{display:none;}
+  section.active{display:block;}
+
+  h2{font-size:20px;font-weight:700;margin:0 0 4px;color:var(--olive-dark);}
+  p.intro{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px;}
+
+  form.card,.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:20px;box-shadow:0 1px 3px rgba(43,38,32,.04);}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  .grid .full{grid-column:1/-1;}
+  @media (min-width:640px){.grid{grid-template-columns:1fr 1fr;}}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  input,select,textarea{width:100%;font-size:16px;padding:12px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background-color:var(--cream) !important;color:var(--ink) !important;-webkit-appearance:none;appearance:none;color-scheme:light;}
+  textarea{resize:vertical;min-height:64px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);background-color:#fff !important;}
+  input::placeholder,textarea::placeholder{color:var(--ink-soft);opacity:.7;}
+
+  .checkbox-row{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;padding:6px 0;}
+  .checkbox-row input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;accent-color:var(--olive);}
+
+  .gordijn-block{background:#fdfcf8;border:1.5px dashed var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;position:relative;}
+  .gordijn-block .gordijn-nr{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .remove-gordijn{background:none;border:none;color:var(--red);font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 6px;}
+
+  .open-count{font-size:13px;font-weight:700;color:var(--green);background:#eef3e8;border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:12px;}
+  .open-count.has-open{color:var(--red);background:#f8e9e3;}
+  .file-link{font-size:12.5px;font-weight:600;color:var(--olive);text-decoration:underline;}
+  .gordijn-row{border-top:1px dashed var(--line);padding:8px 0;font-size:14px;}
+  .gordijn-row:first-of-type{margin-top:6px;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;background:var(--olive);color:#fff;border:none;padding:13px 20px;border-radius:var(--radius-sm);font-size:15.5px;font-weight:600;cursor:pointer;margin-top:4px;width:100%;}
+  form .btn{margin-top:6px;}
+  .btn:active{background:var(--olive-dark);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.secondary{background:transparent;color:var(--olive);border:1.5px solid var(--olive);}
+  .btn.small{padding:9px 14px;font-size:13px;width:auto;}
+  .btn.danger{background:transparent;color:var(--red);border:1.5px solid var(--red);}
+  .btn.gold{background:var(--gold);color:var(--olive-dark);}
+
+  .row-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .row-actions .btn{width:auto;flex:1 1 auto;}
+
+  .list-item{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(43,38,32,.04);}
+  .list-item.vervolg{border-left-color:var(--red);}
+  .list-item .meta{font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;margin-bottom:6px;}
+  .list-item h3{margin:0 0 4px;font-size:16.5px;font-weight:700;color:var(--olive-dark);}
+  .list-item .status{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--gold-light);color:var(--olive-dark);}
+  .list-item .status.vervolg{background:#f3ddd4;color:var(--red);}
+  .list-item p{margin:4px 0;font-size:14.5px;}
+  .list-item .field-label{color:var(--ink-soft);font-size:12px;}
+
+  .empty{color:var(--ink-soft);font-size:14px;padding:24px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--radius);}
+
+  .totals{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  .totals .stat{background:var(--olive-dark);color:var(--gold-light);padding:14px 18px;border-radius:var(--radius);flex:1 1 140px;}
+  .totals .stat .num{font-size:24px;font-weight:700;}
+  .totals .stat .lbl{font-size:11.5px;opacity:.8;margin-top:2px;}
+
+  .setup-box{background:#fdf3dd;border:1.5px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:20px;font-size:14px;}
+  .setup-box input{margin:8px 0;}
+
+  @media print{
+    header.top,nav.tabs,main>*:not(.print-area),.no-print{display:none !important;}
+    .print-area{display:block !important;}
+    body{background:#fff;}
+  }
+  .print-sheet{padding:20px;font-family:Georgia,serif;}
+  .print-sheet h2{border-bottom:2px solid var(--olive);padding-bottom:8px;}
+  .print-sheet table{width:100%;border-collapse:collapse;margin-top:14px;}
+  .print-sheet td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .print-sheet td.k{width:160px;color:var(--ink-soft);font-family:-apple-system,sans-serif;font-size:12px;}
+
+  .toast{position:fixed;bottom:calc(var(--tapbar-h) + 14px);left:50%;transform:translateX(-50%);background:var(--olive-dark);color:var(--gold-light);padding:11px 20px;border-radius:24px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+  .toast.show{opacity:1;}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--gold-light);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body style="background:#fbf8f2;">
+<div id="app">
+
+  <header class="top">
+    <h1>Heuvelrug Raamdecoratie</h1>
+    <div class="sub">Gedeeld via Google Sheets — overal dezelfde gegevens</div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="offertes" class="active"><span class="ic">📝</span>Offertes</button>
+    <button data-tab="werkbonnen"><span class="ic">🧰</span>Werkbon</button>
+    <button data-tab="km"><span class="ic">🚗</span>Km's</button>
+    <button data-tab="uren"><span class="ic">⏱️</span>Uren</button>
+    <button data-tab="inmeten"><span class="ic">📏</span>Inmeten</button>
+    <button data-tab="todos"><span class="ic">📌</span>To-do's</button>
+    <button data-tab="instellingen"><span class="ic">⚙️</span>Instel.</button>
+  </nav>
+
+  <main>
+
+    <div class="setup-box no-print" id="setup-warning" style="display:none;">
+      Nog geen koppeling ingesteld. Ga naar het tabblad <strong>Instellingen</strong> en plak daar je Google Apps Script-webapp-URL.
+    </div>
+
+    <!-- OFFERTES -->
+    <section id="tab-offertes" class="active">
+      <h2>Offertes</h2>
+      <p class="intro">Maak een offerte aan voor een klant.</p>
+      <form class="card" id="form-offerte">
+        <div class="grid">
+          <div><label>Klantnaam</label><input required name="klant"></div>
+          <div><label>Datum</label><input required type="date" name="datum"></div>
+          <div class="full"><label>Adres</label><input name="adres"></div>
+          <div class="full"><label>Omschrijving werkzaamheden</label><textarea name="omschrijving" required></textarea></div>
+          <div><label>Bedrag (€)</label><input type="number" step="0.01" name="bedrag" required></div>
+          <div><label>Status</label>
+            <select name="status"><option>Concept</option><option>Verstuurd</option><option>Geaccepteerd</option><option>Afgewezen</option></select>
+          </div>
+        </div>
+        <button class="btn" type="submit">Offerte opslaan</button>
+      </form>
+      <div id="list-offertes"></div>
+    </section>
+
+    <!-- WERKBONNEN -->
+    <section id="tab-werkbonnen">
+      <h2>Werkbonnen</h2>
+      <p class="intro">Komt een klus niet af? Maak een vervolgwerkbon aan, gekoppeld aan de oorspronkelijke bon.</p>
+
+      <div class="card" id="today-werkbonnen-card" style="border-color:var(--gold);">
+        <label style="margin-bottom:8px;">Werkbonnen van vandaag</label>
+        <div id="list-werkbonnen-vandaag"></div>
+      </div>
+
+      <form class="card" id="form-werkbon">
+        <div class="grid">
+          <div><label>Klantnaam</label><input required name="klant"></div>
+          <div><label>Datum</label><input required type="date" name="datum"></div>
+          <div class="full"><label>Adres</label><input name="adres"></div>
+          <div class="full"><label>Werkzaamheden</label><textarea name="werkzaamheden" required></textarea></div>
+          <div class="full"><label>Gebruikt materiaal</label><textarea name="materiaal"></textarea></div>
+          <div><label>Uren besteed</label><input type="number" step="0.25" name="uren"></div>
+          <div><label>Klus afgerond?</label>
+            <select name="status"><option value="Afgerond">Ja, afgerond</option><option value="Vervolg nodig">Nee, vervolg nodig</option></select>
+          </div>
+        </div>
+        <button class="btn" type="submit">Werkbon opslaan</button>
+      </form>
+      <div id="list-werkbonnen"></div>
+    </section>
+
+    <!-- KM -->
+    <section id="tab-km">
+      <h2>Kilometerregistratie</h2>
+      <p class="intro">Voor de bijtelling — elke rit komt direct als nieuwe regel in je Google Sheet.</p>
+      <form class="card" id="form-km">
+        <div class="grid">
+          <div><label>Datum</label><input required type="date" name="datum"></div>
+          <div>
+            <label>Privé of zakelijk</label>
+            <select name="type"><option value="Zakelijk">Zakelijk</option><option value="Privé">Privé</option></select>
+          </div>
+          <div><label>Beginstand kilometerteller</label><input required type="number" step="1" name="beginstand"></div>
+          <div><label>Eindstand kilometerteller</label><input required type="number" step="1" name="eindstand"></div>
+          <div><label>Aantal kilometer</label><input type="number" step="0.1" name="km" readonly style="background-color:#f0ead8 !important;"></div>
+          <div><label>Van</label><input name="van"></div>
+          <div><label>Naar</label><input name="naar"></div>
+          <div class="full"><label>Doel / klant</label><input name="doel"></div>
+          <div class="full"><label>Opdrachtgever <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><input name="opdrachtgever"></div>
+          <div class="full"><label>Koppel aan werkbon <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><select name="werkbon" id="km-werkbon-select"><option value="">Geen koppeling</option></select></div>
+          <div><label>Tarief per km (€)</label><input type="number" step="0.01" name="tarief" value="0.23"></div>
+        </div>
+        <button class="btn" type="submit">Rit opslaan</button>
+      </form>
+      <div class="totals" id="km-totals"></div>
+      <div id="list-km"></div>
+    </section>
+
+    <!-- UREN -->
+    <section id="tab-uren">
+      <h2>Urenregistratie</h2>
+      <p class="intro">Los bij te houden, los van de werkbon-uren.</p>
+      <form class="card" id="form-uren">
+        <div class="grid">
+          <div><label>Datum</label><input required type="date" name="datum"></div>
+          <div><label>Klant / project</label><input name="klant"></div>
+          <div><label>Aantal uren</label><input required type="number" step="0.25" name="uren"></div>
+          <div class="full"><label>Omschrijving</label><input name="omschrijving"></div>
+          <div><label>Extra te factureren bedrag (€) <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><input type="number" step="0.01" name="extraBedrag"></div>
+          <div class="full"><label>Koppel aan werkbon <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><select name="werkbon" id="uren-werkbon-select"><option value="">Geen koppeling</option></select></div>
+          <div class="full">
+            <label class="checkbox-row">
+              <input type="checkbox" name="gefactureerd">
+              <span>Al gefactureerd</span>
+            </label>
+          </div>
+        </div>
+        <button class="btn" type="submit">Uren opslaan</button>
+      </form>
+      <div class="totals" id="uren-totals"></div>
+      <div id="list-uren"></div>
+    </section>
+
+    <!-- INMETEN -->
+    <section id="tab-inmeten">
+      <h2>Inmeten</h2>
+      <p class="intro">Afmetingen en gordijnkeuze bij de klant vastleggen. Meerdere ramen? Voeg per raam een gordijn toe.</p>
+      <form id="form-inmeten">
+        <div class="card">
+          <div class="grid">
+            <div><label>Klantnaam</label><input required name="klant"></div>
+            <div><label>Datum</label><input required type="date" name="datum"></div>
+            <div class="full"><label>Adres</label><input name="adres"></div>
+            <div class="full"><label>Koppel aan werkbon <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><select name="werkbon" id="inmeten-werkbon-select"><option value="">Geen koppeling</option></select></div>
+          </div>
+        </div>
+
+        <div id="gordijn-blocks"></div>
+
+        <button type="button" class="btn secondary" id="add-gordijn" style="margin-bottom:16px;">+ Nog een gordijn toevoegen</button>
+        <button class="btn" type="submit">Inmeting opslaan</button>
+      </form>
+      <div id="list-inmeten"></div>
+    </section>
+
+    <!-- TODOS -->
+    <section id="tab-todos">
+      <h2>To-do's</h2>
+      <p class="intro">Snel iets noteren dat je niet wilt vergeten.</p>
+      <form class="card" id="form-todo">
+        <div class="grid">
+          <div class="full"><label>Wat moet er gebeuren?</label><input required name="tekst" placeholder="Bijv. materiaal bestellen bij leverancier"></div>
+          <div>
+            <label>Status</label>
+            <select name="status"><option value="Nog doen">Nog doen</option><option value="Mee bezig">Mee bezig</option><option value="Afgerond">Afgerond</option></select>
+          </div>
+          <div>
+            <label>Prioriteit</label>
+            <select name="prioriteit"><option value="Normaal">Normaal</option><option value="Hoog">Hoog</option><option value="Laag">Laag</option></select>
+          </div>
+          <div><label>Deadline <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><input type="date" name="deadline"></div>
+        </div>
+        <button class="btn" type="submit">To-do toevoegen</button>
+      </form>
+      <div id="list-todos"></div>
+    </section>
+
+    <!-- INSTELLINGEN -->
+    <section id="tab-instellingen">
+      <h2>Instellingen</h2>
+      <p class="intro">Koppel deze app aan je Google Sheet. Dit hoef je maar één keer per apparaat te doen.</p>
+      <div class="card">
+        <label>Apps Script webapp-URL (eindigt op /exec)</label>
+        <input id="script-url" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn" id="save-url">Opslaan</button>
+        <p class="sans" id="url-status" style="color:var(--ink-soft);font-size:12.5px;margin-top:10px;"></p>
+        <p class="sans" style="color:var(--ink-soft);font-size:12.5px;margin-top:10px;">Alles komt in je Google Drive in de map <b>Heuvelrug Registratie</b>: Km's en Uren elk in één bestand, offertes, werkbonnen, inmetingen en to-do's elk als nieuw bestand in een eigen submap.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="print-area print-sheet" style="display:none;" id="print-area"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const euro = n => '€ ' + Number(n||0).toLocaleString('nl-NL', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtDate = d => { if(!d) return ''; const s = String(d).slice(0,10); const [y,m,dd]=s.split('-'); return (dd&&m&&y)?(dd+'-'+m+'-'+y):s; };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2000);
+  }
+
+  let SCRIPT_URL = '';
+  try{ SCRIPT_URL = localStorage.getItem('heuvelrug_script_url') || ''; }catch(e){}
+
+  document.getElementById('script-url').value = SCRIPT_URL;
+  updateSetupWarning();
+
+  document.getElementById('save-url').addEventListener('click', ()=>{
+    const val = document.getElementById('script-url').value.trim();
+    if(!val.endsWith('/exec')){ toast('URL moet eindigen op /exec'); return; }
+    SCRIPT_URL = val;
+    try{ localStorage.setItem('heuvelrug_script_url', val); }catch(e){}
+    document.getElementById('url-status').textContent = 'Opgeslagen op dit apparaat.';
+    updateSetupWarning();
+    toast('Koppeling opgeslagen');
+    loadAll();
+  });
+
+  function updateSetupWarning(){
+    document.getElementById('setup-warning').style.display = SCRIPT_URL ? 'none' : 'block';
+  }
+
+  async function apiGet(tab){
+    if(!SCRIPT_URL) return [];
+    const res = await fetch(SCRIPT_URL + '?tab=' + encodeURIComponent(tab));
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  }
+  async function apiPost(payload){
+    if(!SCRIPT_URL){ toast('Stel eerst de koppeling in bij Instellingen'); return false; }
+    try{
+      const res = await fetch(SCRIPT_URL, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(data.error){ console.error(data.error); toast('Opslaan mislukt: ' + data.error); return false; }
+      return data;
+    }catch(e){
+      console.error(e); toast('Opslaan mislukt — controleer je verbinding'); return false;
+    }
+  }
+
+  let offertes=[], werkbonnen=[], kmRitten=[], urenPosten=[], todos=[];
+
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('input[type=date]').forEach(i=> i.value = todayISO());
+  document.querySelector('#form-todo [name=deadline]').value = '';
+
+  function escapeHtml(s){
+    if(!s) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Hulpjes voor onderdelen waar elk formulier een eigen bestand in Drive krijgt
+  function busy(btn){ btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'Bezig met opslaan…'; }
+  function idle(btn){ btn.disabled = false; if(btn.dataset.label) btn.textContent = btn.dataset.label; }
+  function openCount(items){
+    const n = items.filter(i=>i.verwerkt!=='Ja').length;
+    return `<div class="open-count ${n ? 'has-open' : ''}">${n ? n + ' nog te verwerken' : 'Alles verwerkt ✓'}</div>`;
+  }
+  function sortOpenFirst(items){
+    const rev = items.slice().reverse();
+    return rev.filter(i=>i.verwerkt!=='Ja').concat(rev.filter(i=>i.verwerkt==='Ja'));
+  }
+  function verwerktBadge(rec){
+    return `<span class="status ${rec.verwerkt==='Ja' ? '' : 'vervolg'}">${rec.verwerkt==='Ja' ? 'Verwerkt' : 'Nog verwerken'}</span>`;
+  }
+  function fileLink(rec){
+    return rec.bestand ? `<a class="file-link" href="${escapeHtml(rec.bestand)}" target="_blank" rel="noopener">Open bestand in Drive</a>` : '';
+  }
+  function verwerktButton(rec, attr){
+    return `<button class="btn secondary small" ${attr}="${rec.id}">${rec.verwerkt==='Ja' ? 'Zet terug op nog verwerken' : 'Markeer als verwerkt'}</button>`;
+  }
+  async function toggleVerwerkt(tab, rec, reload){
+    const nieuw = rec.verwerkt==='Ja' ? 'Nee' : 'Ja';
+    if(await apiPost({action:'update', tab, id:rec.id, data:{verwerkt:nieuw}})){
+      toast(nieuw==='Ja' ? 'Gemarkeerd als verwerkt' : 'Weer op nog verwerken gezet');
+      await reload();
+    }
+  }
+  const CONFIRM_DEL = 'Verwijderen? Het bestand in Drive gaat ook naar de prullenbak.';
+
+  // ===== OFFERTES =====
+  const formOfferte = document.getElementById('form-offerte');
+  formOfferte.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(formOfferte);
+    const data = { id: uid(), klant: fd.get('klant'), datum: fd.get('datum'), adres: fd.get('adres'), omschrijving: fd.get('omschrijving'), bedrag: fd.get('bedrag'), status: fd.get('status') };
+    const btn = formOfferte.querySelector('button'); busy(btn);
+    if(await apiPost({action:'add', tab:'Offertes', data})){
+      toast('Offerte opgeslagen'); formOfferte.reset();
+      document.querySelector('#form-offerte [name=datum]').value = todayISO();
+      await loadOffertes();
+    }
+    idle(btn);
+  });
+
+  async function loadOffertes(){ offertes = await apiGet('Offertes'); renderOffertes(); }
+  function renderOffertes(){
+    const el = document.getElementById('list-offertes');
+    if(!offertes.length){ el.innerHTML = '<div class="empty">Nog geen offertes.</div>'; return; }
+    el.innerHTML = openCount(offertes) + sortOpenFirst(offertes).map(o => `
+      <div class="list-item">
+        <div class="meta"><span>${fmtDate(o.datum)}</span><span class="status">${escapeHtml(o.status)}</span></div>
+        <h3>${escapeHtml(o.klant)} — ${euro(o.bedrag)}</h3>
+        ${o.adres ? `<p class="field-label">Adres: ${escapeHtml(o.adres)}</p>` : ''}
+        <p>${escapeHtml(o.omschrijving)}</p>
+        <p>${verwerktBadge(o)} ${fileLink(o)}</p>
+        <div class="row-actions">
+          ${verwerktButton(o, 'data-verwerkt-offerte')}
+          <button class="btn danger small" data-del-offerte="${o.id}">Verwijderen</button>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-verwerkt-offerte]').forEach(b=>{
+      b.addEventListener('click', ()=> toggleVerwerkt('Offertes', offertes.find(o=>o.id===b.dataset.verwerktOfferte), loadOffertes));
+    });
+    el.querySelectorAll('[data-del-offerte]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(!confirm(CONFIRM_DEL)) return;
+        if(await apiPost({action:'delete', tab:'Offertes', id:b.dataset.delOfferte})){ toast('Verwijderd'); await loadOffertes(); }
+      });
+    });
+  }
+
+  // ===== WERKBONNEN =====
+  const formWerkbon = document.getElementById('form-werkbon');
+  formWerkbon.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(formWerkbon);
+    const editId = formWerkbon.dataset.editVervolgFor || '';
+    const bonnummer = (werkbonnen.length ? Math.max(...werkbonnen.map(w=>Number(w.bonnummer)||0)) : 0) + 1;
+    const data = { id: uid(), bonnummer, klant: fd.get('klant'), datum: fd.get('datum'), adres: fd.get('adres'), werkzaamheden: fd.get('werkzaamheden'), materiaal: fd.get('materiaal'), uren: fd.get('uren'), status: fd.get('status'), vervolgVan: editId };
+    const btn = formWerkbon.querySelector('button'); busy(btn);
+    if(await apiPost({action:'add', tab:'Werkbonnen', data})){
+      toast(editId ? 'Vervolgwerkbon opgeslagen' : 'Werkbon opgeslagen');
+      formWerkbon.reset(); delete formWerkbon.dataset.editVervolgFor;
+      document.querySelector('#form-werkbon [name=datum]').value = todayISO();
+      await loadWerkbonnen();
+    }
+    idle(btn);
+  });
+
+  function startVervolg(origin){
+    formWerkbon.klant.value = origin.klant;
+    formWerkbon.adres.value = origin.adres;
+    formWerkbon.werkzaamheden.value = 'Vervolg op bon #' + origin.bonnummer + ': ';
+    formWerkbon.materiaal.value = ''; formWerkbon.uren.value = '';
+    formWerkbon.datum.value = todayISO();
+    formWerkbon.dataset.editVervolgFor = origin.id;
+    document.querySelector('nav.tabs button[data-tab=werkbonnen]').click();
+    formWerkbon.scrollIntoView({behavior:'smooth'});
+    toast('Vul de vervolgwerkbon aan en sla op');
+  }
+
+  function printWerkbon(w){
+    const area = document.getElementById('print-area');
+    area.innerHTML = `
+      <h2>Werkbon #${w.bonnummer}${w.vervolgVan ? ' (vervolg)' : ''} — Heuvelrug Raamdecoratie</h2>
+      <table>
+        <tr><td class="k">Klant</td><td>${escapeHtml(w.klant)}</td></tr>
+        <tr><td class="k">Adres</td><td>${escapeHtml(w.adres||'')}</td></tr>
+        <tr><td class="k">Datum</td><td>${fmtDate(w.datum)}</td></tr>
+        <tr><td class="k">Werkzaamheden</td><td>${escapeHtml(w.werkzaamheden)}</td></tr>
+        <tr><td class="k">Materiaal</td><td>${escapeHtml(w.materiaal||'')}</td></tr>
+        <tr><td class="k">Uren</td><td>${w.uren||''}</td></tr>
+        <tr><td class="k">Status</td><td>${escapeHtml(w.status)}</td></tr>
+      </table>`;
+    area.style.display = 'block';
+    window.print();
+    setTimeout(()=>{ area.style.display='none'; }, 500);
+  }
+
+  async function loadWerkbonnen(){ werkbonnen = await apiGet('Werkbonnen'); renderWerkbonnen(); }
+  function renderWerkbonnen(){
+    const el = document.getElementById('list-werkbonnen');
+    if(!werkbonnen.length){ el.innerHTML = '<div class="empty">Nog geen werkbonnen.</div>'; return; }
+    el.innerHTML = openCount(werkbonnen) + sortOpenFirst(werkbonnen).map(w => `
+      <div class="list-item ${w.status==='Vervolg nodig' ? 'vervolg' : ''}">
+        <div class="meta"><span>Bon #${w.bonnummer} · ${fmtDate(w.datum)}</span><span class="status ${w.status==='Vervolg nodig'?'vervolg':''}">${escapeHtml(w.status)}${w.vervolgVan ? ' · vervolgbon' : ''}</span></div>
+        <h3>${escapeHtml(w.klant)}</h3>
+        ${w.adres ? `<p class="field-label">Adres: ${escapeHtml(w.adres)}</p>` : ''}
+        <p>${escapeHtml(w.werkzaamheden)}</p>
+        ${w.materiaal ? `<p class="field-label">Materiaal: ${escapeHtml(w.materiaal)}</p>` : ''}
+        ${w.uren ? `<p class="field-label">Uren: ${w.uren}</p>` : ''}
+        <p>${verwerktBadge(w)} ${fileLink(w)}</p>
+        <div class="row-actions">
+          <button class="btn gold small" data-print="${w.id}">Printen</button>
+          ${w.status==='Vervolg nodig' ? `<button class="btn secondary small" data-vervolg="${w.id}">Vervolgwerkbon maken</button>` : ''}
+          ${verwerktButton(w, 'data-verwerkt-werkbon')}
+          <button class="btn danger small" data-del-werkbon="${w.id}">Verwijderen</button>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-print]').forEach(b=> b.addEventListener('click', ()=> printWerkbon(werkbonnen.find(w=>w.id===b.dataset.print))));
+    el.querySelectorAll('[data-vervolg]').forEach(b=> b.addEventListener('click', ()=> startVervolg(werkbonnen.find(w=>w.id===b.dataset.vervolg))));
+    el.querySelectorAll('[data-verwerkt-werkbon]').forEach(b=>{
+      b.addEventListener('click', ()=> toggleVerwerkt('Werkbonnen', werkbonnen.find(w=>w.id===b.dataset.verwerktWerkbon), loadWerkbonnen));
+    });
+    el.querySelectorAll('[data-del-werkbon]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(!confirm(CONFIRM_DEL)) return;
+        if(await apiPost({action:'delete', tab:'Werkbonnen', id:b.dataset.delWerkbon})){ toast('Verwijderd'); await loadWerkbonnen(); }
+      });
+    });
+    renderWerkbonnenVandaag();
+    populateWerkbonSelects();
+  }
+
+  function renderWerkbonnenVandaag(){
+    const el = document.getElementById('list-werkbonnen-vandaag');
+    if(!el) return;
+    const today = todayISO();
+    const vandaag = werkbonnen.filter(w => (w.datum||'').slice(0,10) === today);
+    if(!vandaag.length){ el.innerHTML = '<p class="field-label">Nog geen werkbonnen vandaag ingevoerd.</p>'; return; }
+    el.innerHTML = vandaag.slice().reverse().map(w => `
+      <div class="list-item ${w.status==='Vervolg nodig' ? 'vervolg' : ''}" style="margin-bottom:8px;">
+        <div class="meta"><span>Bon #${w.bonnummer}</span><span class="status ${w.status==='Vervolg nodig'?'vervolg':''}">${escapeHtml(w.status)}</span></div>
+        <h3>${escapeHtml(w.klant)}</h3>
+        <p class="field-label">${escapeHtml(w.werkzaamheden||'').slice(0,80)}</p>
+      </div>`).join('');
+  }
+
+  function populateWerkbonSelects(){
+    const opts = ['<option value="">Geen koppeling</option>'].concat(
+      werkbonnen.slice().reverse().map(w => `<option value="Bon #${w.bonnummer} — ${escapeHtml(w.klant)}">Bon #${w.bonnummer} — ${escapeHtml(w.klant)} (${fmtDate(w.datum)})</option>`)
+    ).join('');
+    ['km-werkbon-select','uren-werkbon-select','inmeten-werkbon-select'].forEach(id=>{
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const current = sel.value;
+      sel.innerHTML = opts;
+      sel.value = current;
+    });
+  }
+
+  // ===== KM =====
+  const formKm = document.getElementById('form-km');
+  function recalcKm(){
+    const begin = parseFloat(formKm.beginstand.value);
+    const eind = parseFloat(formKm.eindstand.value);
+    if(!isNaN(begin) && !isNaN(eind) && eind >= begin){
+      formKm.km.value = (eind - begin).toFixed(1);
+    } else {
+      formKm.km.value = '';
+    }
+  }
+  formKm.beginstand.addEventListener('input', recalcKm);
+  formKm.eindstand.addEventListener('input', recalcKm);
+
+  formKm.addEventListener('submit', async e=>{
+    e.preventDefault();
+    recalcKm();
+    const fd = new FormData(formKm);
+    const beginstand = fd.get('beginstand'), eindstand = fd.get('eindstand');
+    if(parseFloat(eindstand) < parseFloat(beginstand)){ toast('Eindstand moet hoger zijn dan beginstand'); return; }
+    const data = { id: uid(), datum: fd.get('datum'), type: fd.get('type'), beginstand, eindstand, km: fd.get('km'), van: fd.get('van'), naar: fd.get('naar'), doel: fd.get('doel'), opdrachtgever: fd.get('opdrachtgever'), werkbon: fd.get('werkbon'), tarief: fd.get('tarief') || 0 };
+    const btn = formKm.querySelector('button'); btn.disabled = true;
+    if(await apiPost({action:'add', tab:'Km', data})){
+      toast('Rit opgeslagen'); formKm.reset(); formKm.tarief.value = '0.23';
+      document.querySelector('#form-km [name=datum]').value = todayISO();
+      await loadKm();
+    }
+    btn.disabled = false;
+  });
+
+  async function loadKm(){ kmRitten = await apiGet('Km'); renderKm(); }
+  function prefillBeginstand(){
+    if(kmRitten.length){
+      const last = kmRitten[kmRitten.length-1];
+      if(last && last.eindstand !== undefined && last.eindstand !== ''){
+        formKm.beginstand.value = last.eindstand;
+        recalcKm();
+      }
+    }
+  }
+  function renderKm(){
+    const el = document.getElementById('list-km');
+    const totalsEl = document.getElementById('km-totals');
+    const totalKm = kmRitten.reduce((s,r)=>s+(Number(r.km)||0),0);
+    const totalEuro = kmRitten.reduce((s,r)=>s+(Number(r.km)||0)*(Number(r.tarief)||0),0);
+    const priveKm = kmRitten.filter(r=>r.type==='Privé').reduce((s,r)=>s+(Number(r.km)||0),0);
+    const zakelijkKm = kmRitten.filter(r=>r.type!=='Privé').reduce((s,r)=>s+(Number(r.km)||0),0);
+    totalsEl.innerHTML = `
+      <div class="stat"><div class="num">${totalKm.toLocaleString('nl-NL')}</div><div class="lbl">totaal km</div></div>
+      <div class="stat"><div class="num">${zakelijkKm.toLocaleString('nl-NL')}</div><div class="lbl">waarvan zakelijk</div></div>
+      <div class="stat"><div class="num">${priveKm.toLocaleString('nl-NL')}</div><div class="lbl">waarvan privé</div></div>
+      <div class="stat"><div class="num">${euro(totalEuro)}</div><div class="lbl">totaal reiskosten</div></div>`;
+    if(!kmRitten.length){ el.innerHTML = '<div class="empty">Nog geen ritten.</div>'; return; }
+    el.innerHTML = kmRitten.slice().reverse().map(r => `
+      <div class="list-item">
+        <div class="meta"><span>${fmtDate(r.datum)}</span><span class="status ${r.type==='Privé' ? 'vervolg' : ''}">${escapeHtml(r.type||'Zakelijk')}</span></div>
+        <h3>${r.km} km${r.van || r.naar ? ' — ' + escapeHtml(r.van||'') + (r.naar ? ' → '+escapeHtml(r.naar) : '') : ''}</h3>
+        ${(r.beginstand || r.eindstand) ? `<p class="field-label">Teller: ${r.beginstand||''} → ${r.eindstand||''}</p>` : ''}
+        ${r.doel ? `<p class="field-label">Doel: ${escapeHtml(r.doel)}</p>` : ''}
+        ${r.opdrachtgever ? `<p class="field-label">Opdrachtgever: ${escapeHtml(r.opdrachtgever)}</p>` : ''}
+        ${r.werkbon ? `<p class="field-label">Gekoppeld: ${escapeHtml(r.werkbon)}</p>` : ''}
+        <p class="field-label">Tarief: ${euro(r.tarief)} / km · ${euro((Number(r.km)||0)*(Number(r.tarief)||0))}</p>
+        <div class="row-actions"><button class="btn danger small" data-del-km="${r.id}">Verwijderen</button></div>
+      </div>`).join('');
+    el.querySelectorAll('[data-del-km]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(await apiPost({action:'delete', tab:'Km', id:b.dataset.delKm})){ toast('Verwijderd'); await loadKm(); }
+      });
+    });
+    prefillBeginstand();
+  }
+
+  // ===== UREN =====
+  const formUren = document.getElementById('form-uren');
+  formUren.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(formUren);
+    const data = { id: uid(), datum: fd.get('datum'), klant: fd.get('klant'), uren: fd.get('uren'), omschrijving: fd.get('omschrijving'), extraBedrag: fd.get('extraBedrag'), werkbon: fd.get('werkbon'), gefactureerd: fd.get('gefactureerd') ? 'Ja' : 'Nee' };
+    const btn = formUren.querySelector('button'); btn.disabled = true;
+    if(await apiPost({action:'add', tab:'Uren', data})){
+      toast('Uren opgeslagen'); formUren.reset();
+      document.querySelector('#form-uren [name=datum]').value = todayISO();
+      await loadUren();
+    }
+    btn.disabled = false;
+  });
+
+  async function loadUren(){ urenPosten = await apiGet('Uren'); renderUren(); }
+  function renderUren(){
+    const el = document.getElementById('list-uren');
+    const totalsEl = document.getElementById('uren-totals');
+    const totalUren = urenPosten.reduce((s,u)=>s+(Number(u.uren)||0),0);
+    const openUren = urenPosten.filter(u=>u.gefactureerd!=='Ja').reduce((s,u)=>s+(Number(u.uren)||0),0);
+    const totalExtra = urenPosten.reduce((s,u)=>s+(Number(u.extraBedrag)||0),0);
+    totalsEl.innerHTML = `
+      <div class="stat"><div class="num">${totalUren.toLocaleString('nl-NL')}</div><div class="lbl">totaal uren</div></div>
+      <div class="stat"><div class="num">${openUren.toLocaleString('nl-NL')}</div><div class="lbl">nog niet gefactureerd</div></div>
+      <div class="stat"><div class="num">${euro(totalExtra)}</div><div class="lbl">extra te factureren</div></div>`;
+    if(!urenPosten.length){ el.innerHTML = '<div class="empty">Nog geen uren.</div>'; return; }
+    el.innerHTML = urenPosten.slice().reverse().map(u => `
+      <div class="list-item">
+        <div class="meta"><span>${fmtDate(u.datum)}</span><span class="status ${u.gefactureerd==='Ja' ? '' : 'vervolg'}">${u.gefactureerd==='Ja' ? 'Gefactureerd' : 'Nog niet gefactureerd'}</span></div>
+        <h3>${escapeHtml(u.klant||'—')} — ${u.uren} uur</h3>
+        ${u.omschrijving ? `<p>${escapeHtml(u.omschrijving)}</p>` : ''}
+        ${u.extraBedrag ? `<p class="field-label">Extra: ${euro(u.extraBedrag)}</p>` : ''}
+        ${u.werkbon ? `<p class="field-label">Gekoppeld: ${escapeHtml(u.werkbon)}</p>` : ''}
+        <div class="row-actions">
+          <button class="btn secondary small" data-toggle-fact="${u.id}" data-current="${u.gefactureerd||'Nee'}">${u.gefactureerd==='Ja' ? 'Zet op niet-gefactureerd' : 'Markeer als gefactureerd'}</button>
+          <button class="btn danger small" data-del-uren="${u.id}">Verwijderen</button>
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-del-uren]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(await apiPost({action:'delete', tab:'Uren', id:b.dataset.delUren})){ toast('Verwijderd'); await loadUren(); }
+      });
+    });
+    el.querySelectorAll('[data-toggle-fact]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const nieuw = b.dataset.current === 'Ja' ? 'Nee' : 'Ja';
+        if(await apiPost({action:'update', tab:'Uren', id:b.dataset.toggleFact, data:{gefactureerd:nieuw}})){ toast('Status bijgewerkt'); await loadUren(); }
+      });
+    });
+  }
+
+  // ===== INMETEN =====
+  const formInmeten = document.getElementById('form-inmeten');
+  const gordijnBlocks = document.getElementById('gordijn-blocks');
+  let gordijnCounter = 0;
+
+  function gordijnBlockHtml(nr){
+    return `
+      <div class="gordijn-block" data-gordijn-block>
+        <div class="gordijn-nr"><span>Gordijn/raam ${nr}</span><button type="button" class="remove-gordijn" data-remove-gordijn style="display:none;">Verwijderen</button></div>
+        <div class="grid">
+          <div>
+            <label>Type raamdecoratie</label>
+            <select data-f="type">
+              <option>Rolgordijn</option><option>Plissé</option><option>Horren</option>
+              <option>Houten jaloezie</option><option>Aluminium jaloezie</option>
+              <option>Overgordijn</option><option>Vitrage</option><option>Overig</option>
+            </select>
+          </div>
+          <div><label>Ruimte / raam</label><input data-f="ruimte" placeholder="Bijv. woonkamer, raam links"></div>
+          <div><label>Breedte (cm)</label><input type="number" step="0.1" data-f="breedte"></div>
+          <div><label>Hoogte (cm)</label><input type="number" step="0.1" data-f="hoogte"></div>
+          <div><label>Aantal</label><input type="number" step="1" value="1" data-f="aantal"></div>
+          <div>
+            <label>Maatvoering</label>
+            <select data-f="maatvoering"><option>Strak gemeten</option><option>Klare afmetingen</option></select>
+          </div>
+          <div class="full"><label>Kleur / materiaal</label><input data-f="materiaal"></div>
+          <div class="full"><label>Opmerkingen</label><textarea data-f="opmerkingen"></textarea></div>
+        </div>
+      </div>`;
+  }
+
+  function renumberGordijnBlocks(){
+    const blocks = gordijnBlocks.querySelectorAll('[data-gordijn-block]');
+    blocks.forEach((b,i)=>{
+      b.querySelector('.gordijn-nr span').textContent = 'Gordijn/raam ' + (i+1);
+      b.querySelector('[data-remove-gordijn]').style.display = blocks.length > 1 ? 'inline-block' : 'none';
+    });
+  }
+
+  function addGordijnBlock(){
+    gordijnCounter++;
+    gordijnBlocks.insertAdjacentHTML('beforeend', gordijnBlockHtml(gordijnCounter));
+    renumberGordijnBlocks();
+  }
+  document.getElementById('add-gordijn').addEventListener('click', addGordijnBlock);
+  gordijnBlocks.addEventListener('click', e=>{
+    if(e.target.matches('[data-remove-gordijn]')){
+      e.target.closest('[data-gordijn-block]').remove();
+      renumberGordijnBlocks();
+    }
+  });
+  addGordijnBlock(); // start met 1 leeg blok
+
+  formInmeten.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(formInmeten);
+    const blocks = Array.from(gordijnBlocks.querySelectorAll('[data-gordijn-block]'));
+    const gordijnen = blocks.map(block=>{
+      const g = {};
+      block.querySelectorAll('[data-f]').forEach(f=>{ g[f.dataset.f] = f.value; });
+      return g;
+    });
+    const data = { id: uid(), klant: fd.get('klant'), datum: fd.get('datum'), adres: fd.get('adres'), werkbon: fd.get('werkbon'), gordijnen };
+    const btn = formInmeten.querySelector('button[type=submit]'); busy(btn);
+
+    // Eén inmeting = één bestand in Drive, met alle gordijnen/ramen erin
+    if(await apiPost({action:'add', tab:'Inmeten', data})){
+      toast(gordijnen.length > 1 ? 'Inmeting met ' + gordijnen.length + ' gordijnen opgeslagen' : 'Inmeting opgeslagen');
+      formInmeten.reset();
+      document.querySelector('#form-inmeten [name=datum]').value = todayISO();
+      gordijnBlocks.innerHTML = ''; gordijnCounter = 0; addGordijnBlock();
+      await loadInmeten();
+    }
+    idle(btn);
+  });
+
+  let inmetingen = [];
+  async function loadInmeten(){ inmetingen = await apiGet('Inmeten'); renderInmeten(); }
+  function renderInmeten(){
+    const el = document.getElementById('list-inmeten');
+    if(!inmetingen.length){ el.innerHTML = '<div class="empty">Nog geen inmetingen.</div>'; return; }
+    el.innerHTML = openCount(inmetingen) + sortOpenFirst(inmetingen).map(m => {
+      const gs = Array.isArray(m.gordijnen) ? m.gordijnen : [];
+      return `
+      <div class="list-item">
+        <div class="meta"><span>${fmtDate(m.datum)}</span><span class="status">${gs.length} ${gs.length===1 ? 'gordijn/raam' : 'gordijnen/ramen'}</span></div>
+        <h3>${escapeHtml(m.klant)}</h3>
+        ${m.adres ? `<p class="field-label">Adres: ${escapeHtml(m.adres)}</p>` : ''}
+        ${m.werkbon ? `<p class="field-label">Gekoppeld: ${escapeHtml(m.werkbon)}</p>` : ''}
+        ${gs.map((g,i)=>`
+          <div class="gordijn-row">
+            <b>${i+1}. ${escapeHtml(g.type||'')}${g.ruimte ? ' — ' + escapeHtml(g.ruimte) : ''}</b><br>
+            <span class="field-label">${escapeHtml(g.breedte||'?')} × ${escapeHtml(g.hoogte||'?')} cm · ${escapeHtml(g.aantal||'1')}× · ${escapeHtml(g.maatvoering||'')}${g.materiaal ? ' · ' + escapeHtml(g.materiaal) : ''}</span>
+            ${g.opmerkingen ? `<br><span class="field-label">${escapeHtml(g.opmerkingen)}</span>` : ''}
+          </div>`).join('')}
+        <p>${verwerktBadge(m)} ${fileLink(m)}</p>
+        <div class="row-actions">
+          ${verwerktButton(m, 'data-verwerkt-inmeten')}
+          <button class="btn danger small" data-del-inmeten="${m.id}">Verwijderen</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('[data-verwerkt-inmeten]').forEach(b=>{
+      b.addEventListener('click', ()=> toggleVerwerkt('Inmeten', inmetingen.find(m=>m.id===b.dataset.verwerktInmeten), loadInmeten));
+    });
+    el.querySelectorAll('[data-del-inmeten]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(!confirm(CONFIRM_DEL)) return;
+        if(await apiPost({action:'delete', tab:'Inmeten', id:b.dataset.delInmeten})){ toast('Verwijderd'); await loadInmeten(); }
+      });
+    });
+  }
+
+  // ===== TODO'S =====
+  const formTodo = document.getElementById('form-todo');
+  formTodo.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(formTodo);
+    const data = { id: uid(), tekst: fd.get('tekst'), status: fd.get('status'), prioriteit: fd.get('prioriteit'), deadline: fd.get('deadline') };
+    const btn = formTodo.querySelector('button'); busy(btn);
+    if(await apiPost({action:'add', tab:'Todos', data})){
+      toast('To-do toegevoegd'); formTodo.reset();
+      document.querySelector('#form-todo [name=deadline]').value = '';
+      await loadTodos();
+    }
+    idle(btn);
+  });
+
+  const TODO_ORDER = {'Nog doen':0, 'Mee bezig':1, 'Afgerond':2};
+  const PRIO_ORDER = {'Hoog':0, 'Normaal':1, 'Laag':2};
+  const PRIO_COLOR = {'Hoog':'var(--red)', 'Normaal':'var(--ink-soft)', 'Laag':'var(--ink-soft)'};
+
+  async function loadTodos(){ todos = await apiGet('Todos'); renderTodos(); }
+  function renderTodos(){
+    const el = document.getElementById('list-todos');
+    if(!todos.length){ el.innerHTML = '<div class="empty">Geen to-do\'s — lekker rustig.</div>'; return; }
+    const sorted = todos.slice().sort((a,b)=> {
+      const s = (TODO_ORDER[a.status]??0) - (TODO_ORDER[b.status]??0);
+      if(s !== 0) return s;
+      return (PRIO_ORDER[a.prioriteit]??1) - (PRIO_ORDER[b.prioriteit]??1);
+    });
+    const today = todayISO();
+    const openTodos = todos.filter(t=>t.status!=='Afgerond').length;
+    const countHtml = `<div class="open-count ${openTodos ? 'has-open' : ''}">${openTodos ? openTodos + ' nog te doen' : 'Alles afgerond ✓'}</div>`;
+    el.innerHTML = countHtml + sorted.map(t => {
+      const overdue = t.deadline && t.deadline.slice(0,10) < today && t.status !== 'Afgerond';
+      return `
+      <div class="list-item ${t.status==='Nog doen' ? 'vervolg' : ''}" style="${t.status==='Afgerond' ? 'opacity:.55;' : ''}">
+        <div class="meta">
+          <span>${t.prioriteit && t.prioriteit!=='Normaal' ? `<b style="color:${PRIO_COLOR[t.prioriteit]}">${escapeHtml(t.prioriteit)}</b>` : ''}</span>
+          <span class="status ${t.status==='Nog doen' ? 'vervolg' : ''}">${escapeHtml(t.status||'Nog doen')}</span>
+        </div>
+        <h3 style="${t.status==='Afgerond' ? 'text-decoration:line-through;' : ''}">${escapeHtml(t.tekst)}</h3>
+        ${t.deadline ? `<p class="field-label" style="${overdue ? 'color:var(--red);font-weight:700;' : ''}">Deadline: ${fmtDate(t.deadline)}${overdue ? ' — verlopen' : ''}</p>` : ''}
+        ${t.bestand ? `<p>${fileLink(t)}</p>` : ''}
+        <div class="row-actions">
+          <select class="sans" data-status-todo="${t.id}" style="width:auto;padding:8px 10px;font-size:13px;">
+            <option value="Nog doen" ${t.status==='Nog doen'?'selected':''}>Nog doen</option>
+            <option value="Mee bezig" ${t.status==='Mee bezig'?'selected':''}>Mee bezig</option>
+            <option value="Afgerond" ${t.status==='Afgerond'?'selected':''}>Afgerond</option>
+          </select>
+          <button class="btn danger small" data-del-todo="${t.id}">Verwijderen</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('[data-del-todo]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if(!confirm(CONFIRM_DEL)) return;
+        if(await apiPost({action:'delete', tab:'Todos', id:b.dataset.delTodo})){ toast('Verwijderd'); await loadTodos(); }
+      });
+    });
+    el.querySelectorAll('[data-status-todo]').forEach(sel=>{
+      sel.addEventListener('change', async ()=>{
+        if(await apiPost({action:'update', tab:'Todos', id:sel.dataset.statusTodo, data:{status:sel.value}})){ toast('Status bijgewerkt'); await loadTodos(); } else { toast('Bijwerken mislukt'); }
+      });
+    });
+  }
+
+  async function loadAll(){
+    if(!SCRIPT_URL) return;
+    document.querySelectorAll('#list-offertes,#list-werkbonnen,#list-km,#list-uren,#list-todos,#list-inmeten').forEach(el=> el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>');
+    await Promise.all([loadOffertes(), loadWerkbonnen(), loadKm(), loadUren(), loadTodos(), loadInmeten()]);
+  }
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
