@@ -555,7 +555,7 @@
     return `<span class="status ${rec.verwerkt==='Ja' ? '' : 'vervolg'}">${rec.verwerkt==='Ja' ? 'Verwerkt' : 'Nog verwerken'}</span>`;
   }
   function fileLink(rec){
-    return rec.bestand ? `<a class="file-link" href="${escapeHtml(rec.bestand)}" target="_blank" rel="noopener">Open bestand in Drive</a>` : '';
+    return rec.bestand ? `<a class="file-link" href="${escapeHtml(rec.bestand)}" target="_blank" rel="noopener">Open bestand in Drive</a>` + (rec.nieuw ? ' <span style="color:var(--ink-soft);font-size:12px">· wordt opgemaakt…</span>' : '') : '';
   }
   function verwerktButton(rec, attr){
     return `<button class="btn secondary small" ${attr}="${rec.id}">${rec.verwerkt==='Ja' ? 'Zet terug op nog verwerken' : 'Markeer als verwerkt'}</button>`;
@@ -1467,6 +1467,7 @@
     Uren:      {set:v=>{urenPosten=v;}, render:()=>renderUren(),      el:'list-uren'}
   };
   const TABMAP = {offertes:'Offertes', werkbonnen:'Werkbonnen', km:'Km', uren:'Uren', inmeten:'Inmeten', todos:'Todos'};
+  const POLL = {};
   const HEEFT = {};   // heeft dit onderdeel al gegevens getoond (cache of server)?
 
   async function loadTab(tab, pre){
@@ -1480,7 +1481,12 @@
       try{ data = await apiGet(tab); }catch(e){ data = null; }
       if(my !== SEQ[tab]) return;   // nieuwere versie is al binnen
     }
-    if(data){ st.set(data); writeCache(tab, data); LASTLOAD[tab] = Date.now(); HEEFT[tab] = true; st.render(); }
+    if(data){
+      st.set(data); writeCache(tab, data); LASTLOAD[tab] = Date.now(); HEEFT[tab] = true; st.render();
+      // bestand wordt nog op de achtergrond opgemaakt: straks even opnieuw kijken
+      clearTimeout(POLL[tab]);
+      if(data.some(r=>r.nieuw)) POLL[tab] = setTimeout(()=>loadTab(tab), window.__pollMs || 20000);
+    }
     else if(!HEEFT[tab]){
       document.getElementById(st.el).innerHTML = '<div class="empty">Laden mislukt — controleer je verbinding en probeer het opnieuw.</div>';
     }
