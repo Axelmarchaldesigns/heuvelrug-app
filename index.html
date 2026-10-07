@@ -457,6 +457,8 @@
   let toastTimer;
   function toast(msg){
     const t = document.getElementById('toast');
+    const L = window.__laatste;
+    if(L && Date.now()-L.op < 3000 && L.ms > 5000) msg = msg + ' (duurde ' + Math.round(L.ms/1000) + ' s' + (L.tijden ? ': ' + L.tijden : '') + ')';
     t.textContent = msg; t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(()=>t.classList.remove('show'), 2000 + Math.min(String(msg).length, 120) * 30);
@@ -505,6 +507,7 @@
   async function apiPost(payload){
     if(!SCRIPT_URL){ toast('Stel eerst de koppeling in bij Instellingen'); return false; }
     try{
+      const t0 = Date.now();
       const res = await fetch(SCRIPT_URL, {
         method:'POST',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -512,6 +515,7 @@
       });
       const data = await res.json();
       if(data.error){ console.error(data.error); toast('Opslaan mislukt: ' + data.error); return false; }
+      window.__laatste = {ms: Date.now()-t0, tijden: data.tijden || (Array.isArray(data.lijst) ? '' : 'oud script (nog niet bijgewerkt)'), op: Date.now()};
       if(Array.isArray(data.lijst) && payload.tab){ FRESH[payload.tab] = data.lijst; }   // script stuurt de nieuwe lijst mee: geen extra verzoek nodig
       return data;
     }catch(e){
