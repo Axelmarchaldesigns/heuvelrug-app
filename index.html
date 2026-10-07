@@ -483,11 +483,24 @@
     document.getElementById('setup-warning').style.display = SCRIPT_URL ? 'none' : 'block';
   }
 
+  // ---- snelheid: bewaar de laatste lijsten op dit apparaat en toon die meteen ----
+  const FRESH = {}, LASTLOAD = {}, SEQ = {};
+  const ckey = t => 'hv_' + SCRIPT_URL.slice(-14) + '_' + t;
+  function readCache(t){ try{ const v = localStorage.getItem(ckey(t)); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+  function writeCache(t, v){ try{ localStorage.setItem(ckey(t), JSON.stringify(v)); }catch(e){} }
   async function apiGet(tab){
     if(!SCRIPT_URL) return [];
     const res = await fetch(SCRIPT_URL + '?tab=' + encodeURIComponent(tab));
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    if(!Array.isArray(data)) throw new Error(data && data.error ? data.error : 'onbekende fout');
+    return data;
+  }
+  async function apiBatch(tabs){
+    try{
+      const data = await (await fetch(SCRIPT_URL + '?tab=Batch&tabs=' + tabs.join(','))).json();
+      if(data && !data.error && !Array.isArray(data)) return data;
+    }catch(e){}
+    return null;
   }
   async function apiPost(payload){
     if(!SCRIPT_URL){ toast('Stel eerst de koppeling in bij Instellingen'); return false; }
@@ -499,6 +512,7 @@
       });
       const data = await res.json();
       if(data.error){ console.error(data.error); toast('Opslaan mislukt: ' + data.error); return false; }
+      if(Array.isArray(data.lijst) && payload.tab){ FRESH[payload.tab] = data.lijst; }   // script stuurt de nieuwe lijst mee: geen extra verzoek nodig
       return data;
     }catch(e){
       console.error(e); toast('Opslaan mislukt — controleer je verbinding'); return false;
@@ -514,6 +528,7 @@
       btn.classList.add('active');
       document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
       if(btn.dataset.tab === 'agenda') loadAgenda();   // pikt wijzigingen uit Google Agenda op
+      else { const t = TABMAP[btn.dataset.tab]; if(t && Date.now() - (LASTLOAD[t] || 0) > 45000) loadTab(t); }
     });
   });
 
@@ -571,7 +586,7 @@
     idle(btn);
   });
 
-  async function loadOffertes(){ offertes = await apiGet('Offertes'); renderOffertes(); }
+  async function loadOffertes(){ await loadTab('Offertes'); }
   function renderOffertes(){
     const el = document.getElementById('list-offertes');
     if(!offertes.length){ el.innerHTML = '<div class="empty">Nog geen offertes.</div>'; return; }
@@ -648,7 +663,7 @@
     setTimeout(()=>{ area.style.display='none'; }, 500);
   }
 
-  async function loadWerkbonnen(){ werkbonnen = await apiGet('Werkbonnen'); renderWerkbonnen(); }
+  async function loadWerkbonnen(){ await loadTab('Werkbonnen'); }
   function renderWerkbonnen(){
     const el = document.getElementById('list-werkbonnen');
     if(!werkbonnen.length){ el.innerHTML = '<div class="empty">Nog geen werkbonnen.</div>'; return; }
@@ -746,7 +761,7 @@
     btn.disabled = false;
   });
 
-  async function loadKm(){ kmRitten = await apiGet('Km'); renderKm(); }
+  async function loadKm(){ await loadTab('Km'); }
   function prefillBeginstand(){
     if(kmRitten.length){
       const last = kmRitten[kmRitten.length-1];
@@ -803,7 +818,7 @@
     btn.disabled = false;
   });
 
-  async function loadUren(){ urenPosten = await apiGet('Uren'); renderUren(); }
+  async function loadUren(){ await loadTab('Uren'); }
   function renderUren(){
     const el = document.getElementById('list-uren');
     const totalsEl = document.getElementById('uren-totals');
@@ -920,7 +935,7 @@
   });
 
   let inmetingen = [];
-  async function loadInmeten(){ inmetingen = await apiGet('Inmeten'); renderInmeten(); }
+  async function loadInmeten(){ await loadTab('Inmeten'); }
   function renderInmeten(){
     const el = document.getElementById('list-inmeten');
     if(!inmetingen.length){ el.innerHTML = '<div class="empty">Nog geen inmetingen.</div>'; return; }
@@ -977,7 +992,7 @@
   const PRIO_ORDER = {'Hoog':0, 'Normaal':1, 'Laag':2};
   const PRIO_COLOR = {'Hoog':'var(--red)', 'Normaal':'var(--ink-soft)', 'Laag':'var(--ink-soft)'};
 
-  async function loadTodos(){ todos = await apiGet('Todos'); renderTodos(); }
+  async function loadTodos(){ await loadTab('Todos'); }
   function renderTodos(){
     const el = document.getElementById('list-todos');
     if(!todos.length){ el.innerHTML = '<div class="empty">Geen to-do\'s — lekker rustig.</div>'; return; }
@@ -1210,26 +1225,45 @@
     }
   });
 
+  let agSeq = 0;
   async function loadAgenda(){
     if(!SCRIPT_URL) return;
     const el = document.getElementById('list-agenda');
-    el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>';
+    const van = visStart(), n = visDays(), tot = addDays(van, n-1);
+    const key = 'Agenda_' + van + '_' + n;
+    const c = readCache(key);
+    if(c && Array.isArray(c.items)){ agendaItems = c.items; if(Array.isArray(c.agendas)) agendaLijst = c.agendas; agendaError = ''; renderAgenda(); }
+    else el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>';
+    const my = ++agSeq;
+    let items = null, agendas = null, msg = '';
     try{
+      const d = await (await fetch(SCRIPT_URL + '?tab=AgendaPlus&van=' + van + '&tot=' + tot)).json();
+      if(d && Array.isArray(d.events)){ items = d.events; agendas = d.agendas; }
+      else msg = d && d.error ? String(d.error) : 'onbekende fout';
+      if(items === null && /onbekend tabblad/.test(msg)){
+        // ouder script: losse verzoeken
+        try{ const l = await (await fetch(SCRIPT_URL + '?tab=Agendas')).json(); if(Array.isArray(l)) agendas = l; }catch(e){}
+        const d2 = await (await fetch(SCRIPT_URL + '?tab=Agenda&van=' + van + '&tot=' + tot)).json();
+        if(Array.isArray(d2)){ items = d2; msg = ''; } else msg = d2 && d2.error ? String(d2.error) : 'onbekende fout';
+      }
+    }catch(err){ msg = 'net'; }
+    if(my !== agSeq) return;   // een nieuwere aanvraag is al onderweg
+    if(items !== null){
+      agendaItems = items; agendaError = '';
+      if(Array.isArray(agendas)) agendaLijst = agendas;
+      writeCache(key, {items, agendas: agendaLijst});
       try{
-        const lijst = await (await fetch(SCRIPT_URL + '?tab=Agendas')).json();
-        if(Array.isArray(lijst)) agendaLijst = lijst;
+        const pre = 'hv_' + SCRIPT_URL.slice(-14) + '_Agenda_';
+        const keys = []; for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k.indexOf(pre) === 0) keys.push(k); }
+        if(keys.length > 8) keys.forEach(k=>{ if(k !== ckey(key)) localStorage.removeItem(k); });
       }catch(e){}
-      const res = await fetch(SCRIPT_URL + '?tab=Agenda&van=' + visStart() + '&tot=' + addDays(visStart(), visDays()-1));
-      const data = await res.json();
-      if(Array.isArray(data)){ agendaItems = data; agendaError = ''; }
-      else {
-        agendaItems = [];
-        const msg = data && data.error ? String(data.error) : 'onbekende fout';
-        agendaError = /onbekend tabblad/.test(msg)
+    } else if(!(c && Array.isArray(c.items))){
+      agendaItems = [];
+      agendaError = msg === 'net' ? 'Agenda laden mislukt — controleer je verbinding.'
+        : /onbekend tabblad/.test(msg)
           ? 'De agenda-koppeling is nog niet actief. Werk het Google-script bij (nieuwe Code.gs plakken, "setup" uitvoeren en een nieuwe versie implementeren).'
           : 'Agenda laden mislukt: ' + msg;
-      }
-    }catch(err){ agendaItems = []; agendaError = 'Agenda laden mislukt — controleer je verbinding.'; }
+    }
     renderAgenda();
   }
 
@@ -1424,10 +1458,46 @@
     }));
   }
 
+  const TABS = {
+    Offertes:  {set:v=>{offertes=v;},   render:()=>renderOffertes(),  el:'list-offertes'},
+    Werkbonnen:{set:v=>{werkbonnen=v;}, render:()=>renderWerkbonnen(), el:'list-werkbonnen'},
+    Inmeten:   {set:v=>{inmetingen=v;}, render:()=>renderInmeten(),   el:'list-inmeten'},
+    Todos:     {set:v=>{todos=v;},      render:()=>renderTodos(),     el:'list-todos'},
+    Km:        {set:v=>{kmRitten=v;},   render:()=>renderKm(),        el:'list-km'},
+    Uren:      {set:v=>{urenPosten=v;}, render:()=>renderUren(),      el:'list-uren'}
+  };
+  const TABMAP = {offertes:'Offertes', werkbonnen:'Werkbonnen', km:'Km', uren:'Uren', inmeten:'Inmeten', todos:'Todos'};
+  const HEEFT = {};   // heeft dit onderdeel al gegevens getoond (cache of server)?
+
+  async function loadTab(tab, pre){
+    if(!SCRIPT_URL) return;
+    const st = TABS[tab];
+    let data = null;
+    if(FRESH[tab]){ data = FRESH[tab]; delete FRESH[tab]; SEQ[tab] = (SEQ[tab] || 0) + 1; }
+    else if(Array.isArray(pre)){ data = pre; SEQ[tab] = (SEQ[tab] || 0) + 1; }
+    else {
+      const my = SEQ[tab] = (SEQ[tab] || 0) + 1;
+      try{ data = await apiGet(tab); }catch(e){ data = null; }
+      if(my !== SEQ[tab]) return;   // nieuwere versie is al binnen
+    }
+    if(data){ st.set(data); writeCache(tab, data); LASTLOAD[tab] = Date.now(); HEEFT[tab] = true; st.render(); }
+    else if(!HEEFT[tab]){
+      document.getElementById(st.el).innerHTML = '<div class="empty">Laden mislukt — controleer je verbinding en probeer het opnieuw.</div>';
+    }
+  }
+
   async function loadAll(){
     if(!SCRIPT_URL) return;
-    document.querySelectorAll('#list-offertes,#list-werkbonnen,#list-km,#list-uren,#list-todos,#list-inmeten').forEach(el=> el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>');
-    await Promise.all([loadOffertes(), loadWerkbonnen(), loadKm(), loadUren(), loadTodos(), loadInmeten(), loadAgenda()]);
+    Object.keys(TABS).forEach(t=>{
+      const c = readCache(t);
+      if(Array.isArray(c)){ TABS[t].set(c); HEEFT[t] = true; TABS[t].render(); }
+      else { HEEFT[t] = false; document.getElementById(TABS[t].el).innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>'; }
+    });
+    const eerst = ['Offertes','Werkbonnen','Inmeten','Todos'], daarna = ['Km','Uren'];
+    const b1 = await apiBatch(eerst);
+    await Promise.all(eerst.map(t=> loadTab(t, b1 ? b1[t] : undefined)));
+    const b2 = await apiBatch(daarna);
+    await Promise.all(daarna.map(t=> loadTab(t, b2 ? b2[t] : undefined)));
   }
 
   loadAll();
