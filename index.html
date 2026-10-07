@@ -756,13 +756,10 @@
     const beginstand = fd.get('beginstand'), eindstand = fd.get('eindstand');
     if(parseFloat(eindstand) < parseFloat(beginstand)){ toast('Eindstand moet hoger zijn dan beginstand'); return; }
     const data = { id: uid(), datum: fd.get('datum'), type: fd.get('type'), beginstand, eindstand, km: fd.get('km'), van: fd.get('van'), naar: fd.get('naar'), doel: fd.get('doel'), opdrachtgever: fd.get('opdrachtgever'), werkbon: fd.get('werkbon'), tarief: fd.get('tarief') || 0 };
-    const btn = formKm.querySelector('button'); btn.disabled = true;
-    if(await apiPost({action:'add', tab:'Km', data})){
-      toast('Rit opgeslagen'); formKm.reset(); formKm.tarief.value = '0.23';
-      document.querySelector('#form-km [name=datum]').value = todayISO();
-      await loadKm();
-    }
-    btn.disabled = false;
+    formKm.reset(); formKm.tarief.value = '0.23';
+    document.querySelector('#form-km [name=datum]').value = todayISO();
+    toast('Rit staat erin — wordt op de achtergrond opgeslagen…');
+    if(await bgAdd('Km', data)) toast('Rit opgeslagen');
   });
 
   async function loadKm(){ await loadTab('Km'); }
@@ -813,13 +810,10 @@
     e.preventDefault();
     const fd = new FormData(formUren);
     const data = { id: uid(), datum: fd.get('datum'), klant: fd.get('klant'), uren: fd.get('uren'), omschrijving: fd.get('omschrijving'), extraBedrag: fd.get('extraBedrag'), werkbon: fd.get('werkbon'), gefactureerd: fd.get('gefactureerd') ? 'Ja' : 'Nee' };
-    const btn = formUren.querySelector('button'); btn.disabled = true;
-    if(await apiPost({action:'add', tab:'Uren', data})){
-      toast('Uren opgeslagen'); formUren.reset();
-      document.querySelector('#form-uren [name=datum]').value = todayISO();
-      await loadUren();
-    }
-    btn.disabled = false;
+    formUren.reset();
+    document.querySelector('#form-uren [name=datum]').value = todayISO();
+    toast('Uren staan erin — worden op de achtergrond opgeslagen…');
+    if(await bgAdd('Uren', data)) toast('Uren opgeslagen');
   });
 
   async function loadUren(){ await loadTab('Uren'); }
@@ -982,14 +976,13 @@
     const fd = new FormData(formTodo);
     const data = { id: uid(), tekst: fd.get('tekst'), status: fd.get('status'), prioriteit: fd.get('prioriteit'), deadline: fd.get('deadline'), inAgenda: fd.get('inAgenda') ? 'Ja' : 'Nee' };
     const btn = formTodo.querySelector('button[type=submit]'); busy(btn);
-    const res = await apiPost({action:'add', tab:'Todos', data});
-    if(res){
-      toast(res.waarschuwing ? res.waarschuwing : (data.deadline && data.inAgenda === 'Ja' ? 'To-do toegevoegd en in de agenda gezet' : 'To-do toegevoegd'));
-      formTodo.reset();
-      document.querySelector('#form-todo [name=deadline]').value = '';
-      await loadTodos();
-    }
+    const metAgenda = data.deadline && data.inAgenda === 'Ja';
+    formTodo.reset();
+    document.querySelector('#form-todo [name=deadline]').value = '';
     idle(btn);
+    toast('To-do staat erin — wordt op de achtergrond opgeslagen…');
+    const res = await bgAdd('Todos', data);
+    if(res) toast(res.waarschuwing ? res.waarschuwing : (metAgenda ? 'To-do opgeslagen en in de agenda gezet' : 'To-do opgeslagen'));
   });
 
   const TODO_ORDER = {'Nog doen':0, 'Mee bezig':1, 'Afgerond':2};
@@ -1463,12 +1456,12 @@
   }
 
   const TABS = {
-    Offertes:  {set:v=>{offertes=v;},   render:()=>renderOffertes(),  el:'list-offertes'},
-    Werkbonnen:{set:v=>{werkbonnen=v;}, render:()=>renderWerkbonnen(), el:'list-werkbonnen'},
-    Inmeten:   {set:v=>{inmetingen=v;}, render:()=>renderInmeten(),   el:'list-inmeten'},
-    Todos:     {set:v=>{todos=v;},      render:()=>renderTodos(),     el:'list-todos'},
-    Km:        {set:v=>{kmRitten=v;},   render:()=>renderKm(),        el:'list-km'},
-    Uren:      {set:v=>{urenPosten=v;}, render:()=>renderUren(),      el:'list-uren'}
+    Offertes:  {get:()=>offertes, set:v=>{offertes=v;},   render:()=>renderOffertes(),  el:'list-offertes'},
+    Werkbonnen:{get:()=>werkbonnen, set:v=>{werkbonnen=v;}, render:()=>renderWerkbonnen(), el:'list-werkbonnen'},
+    Inmeten:   {get:()=>inmetingen, set:v=>{inmetingen=v;}, render:()=>renderInmeten(),   el:'list-inmeten'},
+    Todos:     {get:()=>todos, set:v=>{todos=v;},      render:()=>renderTodos(),     el:'list-todos'},
+    Km:        {get:()=>kmRitten, set:v=>{kmRitten=v;},   render:()=>renderKm(),        el:'list-km'},
+    Uren:      {get:()=>urenPosten, set:v=>{urenPosten=v;}, render:()=>renderUren(),      el:'list-uren'}
   };
   const TABMAP = {offertes:'Offertes', werkbonnen:'Werkbonnen', km:'Km', uren:'Uren', inmeten:'Inmeten', todos:'Todos'};
   const POLL = {};
@@ -1494,6 +1487,22 @@
     else if(!HEEFT[tab]){
       document.getElementById(st.el).innerHTML = '<div class="empty">Laden mislukt — controleer je verbinding en probeer het opnieuw.</div>';
     }
+  }
+
+  // Direct tonen, op de achtergrond opslaan: je hoeft niet te wachten op Google
+  async function bgAdd(tab, data){
+    const t = TABS[tab];
+    SEQ[tab] = (SEQ[tab] || 0) + 1;
+    t.set(t.get().concat([Object.assign({aangemaakt: todayISO()}, data)]));
+    t.render();
+    const res = await apiPost({action:'add', tab, data});
+    if(!res){
+      t.set(t.get().filter(r=>r.id !== data.id)); t.render();
+      toast('Niet opgeslagen — probeer het opnieuw');
+      return false;
+    }
+    await loadTab(tab);
+    return res;
   }
 
   async function loadAll(){
