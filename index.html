@@ -45,9 +45,9 @@
   nav.tabs button{
     flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     background:none;border:none;color:var(--ink-soft);
-    padding:9px 2px 8px;font-size:10.5px;cursor:pointer;min-height:var(--tapbar-h);
+    padding:9px 1px 8px;font-size:10px;cursor:pointer;min-height:var(--tapbar-h);
   }
-  nav.tabs button .ic{font-size:21px;line-height:1;}
+  nav.tabs button .ic{font-size:20px;line-height:1;}
   nav.tabs button.active{color:var(--olive-dark);font-weight:700;}
   nav.tabs button.active .ic{transform:translateY(-1px);}
 
@@ -70,7 +70,7 @@
   input::placeholder,textarea::placeholder{color:var(--ink-soft);opacity:.7;}
 
   .checkbox-row{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;padding:6px 0;}
-  .checkbox-row input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;accent-color:var(--olive);}
+  .checkbox-row input[type=checkbox]{width:24px;height:24px;flex:0 0 auto;accent-color:var(--olive);-webkit-appearance:checkbox !important;appearance:auto !important;padding:0;margin:0;background-color:transparent !important;}
 
   .gordijn-block{background:#fdfcf8;border:1.5px dashed var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;position:relative;}
   .gordijn-block .gordijn-nr{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
@@ -103,6 +103,24 @@
   .list-item p{margin:4px 0;font-size:14.5px;}
   .list-item .field-label{color:var(--ink-soft);font-size:12px;}
 
+  /* Agenda — Mango-oranje, net als de Heuvelrug-agenda in Google Agenda */
+  :root{--mango:#ffad46;--mango-soft:#fff1dc;}
+  .week-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .week-nav .week-label{flex:1;text-align:center;font-weight:700;color:var(--olive-dark);font-size:14.5px;}
+  .week-nav .btn{margin-top:0;}
+  .day-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--line);font-weight:700;color:var(--olive-dark);font-size:14.5px;}
+  .day-head.today{border-bottom-color:var(--mango);}
+  .day-head .today-tag{background:var(--mango);color:var(--olive-dark);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;}
+  .day-head button{background:none;border:none;color:var(--olive);font-size:13px;font-weight:600;cursor:pointer;padding:4px 2px;}
+  .day-empty{font-size:13px;color:var(--ink-soft);padding:0 2px 4px;}
+  .list-item.agenda-item{border-left-color:var(--mango);}
+  .list-item.agenda-item .status{background:var(--mango-soft);color:var(--olive-dark);}
+  .list-item.agenda-item.other{border-left-color:#9aa8b8;}
+  .list-item.agenda-item.other .status{background:#e8edf2;}
+  .agenda-legend{font-size:12px;color:var(--ink-soft);margin:0 0 4px;display:flex;gap:14px;flex-wrap:wrap;}
+  .agenda-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:baseline;}
+  .agenda-time{font-weight:700;color:var(--olive-dark);}
+  .agenda-error{background:#f8e9e3;color:var(--red);border-radius:var(--radius);padding:14px 16px;font-size:14px;margin-bottom:14px;}
   .empty{color:var(--ink-soft);font-size:14px;padding:24px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--radius);}
 
   .totals{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
@@ -135,7 +153,7 @@
 
   <header class="top">
     <h1>Heuvelrug Raamdecoratie</h1>
-    <div class="sub">Gedeeld via Google Sheets — overal dezelfde gegevens</div>
+    <div class="sub">Offertes, werkbonnen, km's en agenda — overal dezelfde gegevens</div>
   </header>
 
   <nav class="tabs">
@@ -145,6 +163,7 @@
     <button data-tab="uren"><span class="ic">⏱️</span>Uren</button>
     <button data-tab="inmeten"><span class="ic">📏</span>Inmeten</button>
     <button data-tab="todos"><span class="ic">📌</span>To-do's</button>
+    <button data-tab="agenda"><span class="ic">📅</span>Agenda</button>
     <button data-tab="instellingen"><span class="ic">⚙️</span>Instel.</button>
   </nav>
 
@@ -291,22 +310,68 @@
             <select name="prioriteit"><option value="Normaal">Normaal</option><option value="Hoog">Hoog</option><option value="Laag">Laag</option></select>
           </div>
           <div><label>Deadline <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><input type="date" name="deadline"></div>
+          <div class="full">
+            <label class="checkbox-row">
+              <input type="checkbox" name="inAgenda" checked>
+              <span>Deadline ook in de Heuvelrug-agenda zetten</span>
+            </label>
+          </div>
         </div>
         <button class="btn" type="submit">To-do toevoegen</button>
       </form>
       <div id="list-todos"></div>
     </section>
 
+    <!-- AGENDA -->
+    <section id="tab-agenda">
+      <h2>Agenda</h2>
+      <p class="intro">Je eigen agenda <b>Heuvelrug</b> (oranje) in Google Agenda. Wat je hier maakt of wijzigt, staat direct ook in Google Agenda — en andersom.</p>
+
+      <button class="btn" id="agenda-new" type="button" style="margin-bottom:16px;">+ Nieuwe afspraak</button>
+
+      <form class="card" id="form-agenda" style="display:none;">
+        <h3 id="agenda-form-title" style="margin:0 0 12px;font-size:16.5px;color:var(--olive-dark);">Nieuwe afspraak</h3>
+        <div class="grid">
+          <div>
+            <label>Soort</label>
+            <select name="soort"><option>Inmeten</option><option>Werkbon</option><option>Offerte</option><option>To-do</option><option>Overig</option></select>
+          </div>
+          <div><label>Klant / titel</label><input required name="klant" placeholder="Bijv. Jansen"></div>
+          <div><label>Datum</label><input required type="date" name="datum"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <label class="checkbox-row" style="margin-bottom:0;"><input type="checkbox" name="heleDag"><span>Hele dag</span></label>
+          </div>
+          <div data-tijd><label>Van</label><input type="time" name="begin" value="09:00"></div>
+          <div data-tijd><label>Tot</label><input type="time" name="eind" value="10:00"></div>
+          <div class="full"><label>In welke agenda?</label><select name="agendaId" id="agenda-kies"><option value="">Heuvelrug</option></select></div>
+          <div class="full"><label>Locatie / adres <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><input name="locatie" placeholder="Straat 1, Plaats"></div>
+          <div class="full"><label>Notitie <span style="font-weight:400;color:var(--ink-soft);">(optioneel)</span></label><textarea name="omschrijving"></textarea></div>
+        </div>
+        <button class="btn" type="submit" id="agenda-save">Afspraak opslaan</button>
+        <button class="btn secondary" type="button" id="agenda-cancel">Annuleren</button>
+      </form>
+
+      <div class="week-nav">
+        <button class="btn secondary small" id="week-prev" type="button" aria-label="Vorige week">‹</button>
+        <div class="week-label" id="week-label"></div>
+        <button class="btn secondary small" id="week-next" type="button" aria-label="Volgende week">›</button>
+      </div>
+      <button class="btn secondary small" id="week-today" type="button" style="margin:-4px 0 6px;">Naar vandaag</button>
+      <p class="agenda-legend" id="agenda-legend"></p>
+      <div id="list-agenda"></div>
+      <p class="field-label" style="margin-top:16px;"><a class="file-link" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">Openen in Google Agenda</a></p>
+    </section>
+
     <!-- INSTELLINGEN -->
     <section id="tab-instellingen">
       <h2>Instellingen</h2>
-      <p class="intro">Koppel deze app aan je Google Sheet. Dit hoef je maar één keer per apparaat te doen.</p>
+      <p class="intro">Koppel deze app aan je Google-account (Drive en Agenda). Dit hoef je maar één keer per apparaat te doen.</p>
       <div class="card">
         <label>Apps Script webapp-URL (eindigt op /exec)</label>
         <input id="script-url" placeholder="https://script.google.com/macros/s/.../exec">
         <button class="btn" id="save-url">Opslaan</button>
         <p class="sans" id="url-status" style="color:var(--ink-soft);font-size:12.5px;margin-top:10px;"></p>
-        <p class="sans" style="color:var(--ink-soft);font-size:12.5px;margin-top:10px;">Alles komt in je Google Drive in de map <b>Heuvelrug Registratie</b>: Km's en Uren elk in één bestand, offertes, werkbonnen, inmetingen en to-do's elk als nieuw bestand in een eigen submap.</p>
+        <p class="sans" style="color:var(--ink-soft);font-size:12.5px;margin-top:10px;">Alles komt in je Google Drive in de map <b>Heuvelrug Registratie</b>: Km's en Uren elk in één bestand, offertes, werkbonnen, inmetingen en to-do's elk als nieuw bestand in een eigen submap. Afspraken staan in je Google Agenda <b>Heuvelrug</b>.</p>
       </div>
     </section>
 
@@ -321,12 +386,27 @@
   const euro = n => '€ ' + Number(n||0).toLocaleString('nl-NL', {minimumFractionDigits:2, maximumFractionDigits:2});
   const fmtDate = d => { if(!d) return ''; const s = String(d).slice(0,10); const [y,m,dd]=s.split('-'); return (dd&&m&&y)?(dd+'-'+m+'-'+y):s; };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-  const todayISO = () => new Date().toISOString().slice(0,10);
+  const pad2 = n => String(n).padStart(2,'0');
+  const isoOf = d => d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+  const parseISO = s => { const [y,m,d] = String(s).slice(0,10).split('-').map(Number); return new Date(y, m-1, d, 12); };
+  const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate()+n); return isoOf(d); };
+  const mondayOf = iso => { const d = parseISO(iso); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return isoOf(d); };
+  const todayISO = () => isoOf(new Date());   // lokale datum (niet UTC)
+  const DAGEN = ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  const MAANDEN = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  const dagKort = iso => { const d = parseISO(iso); return d.getDate() + ' ' + MAANDEN[d.getMonth()]; };
+  const isoWeek = iso => {
+    const d = parseISO(iso); d.setDate(d.getDate() + 3 - ((d.getDay()+6)%7));
+    const w1 = new Date(d.getFullYear(), 0, 4, 12);
+    return 1 + Math.round(((d - w1)/86400000 - 3 + ((w1.getDay()+6)%7)) / 7);
+  };
 
+  let toastTimer;
   function toast(msg){
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2000);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2000 + Math.min(String(msg).length, 120) * 30);
   }
 
   let SCRIPT_URL = '';
@@ -380,6 +460,7 @@
       document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'agenda') loadAgenda();   // pikt wijzigingen uit Google Agenda op
     });
   });
 
@@ -526,12 +607,17 @@
         <div class="row-actions">
           <button class="btn gold small" data-print="${w.id}">Printen</button>
           ${w.status==='Vervolg nodig' ? `<button class="btn secondary small" data-vervolg="${w.id}">Vervolgwerkbon maken</button>` : ''}
+          ${w.status==='Vervolg nodig' ? `<button class="btn secondary small" data-plan-vervolg="${w.id}">Vervolg in agenda zetten</button>` : ''}
           ${verwerktButton(w, 'data-verwerkt-werkbon')}
           <button class="btn danger small" data-del-werkbon="${w.id}">Verwijderen</button>
         </div>
       </div>`).join('');
     el.querySelectorAll('[data-print]').forEach(b=> b.addEventListener('click', ()=> printWerkbon(werkbonnen.find(w=>w.id===b.dataset.print))));
     el.querySelectorAll('[data-vervolg]').forEach(b=> b.addEventListener('click', ()=> startVervolg(werkbonnen.find(w=>w.id===b.dataset.vervolg))));
+    el.querySelectorAll('[data-plan-vervolg]').forEach(b=> b.addEventListener('click', ()=>{
+      const w = werkbonnen.find(x=>x.id===b.dataset.planVervolg);
+      openAgendaForm({ soort:'Werkbon', klant:w.klant, locatie:w.adres||'', omschrijving:'Vervolg op bon #'+w.bonnummer+': '+(w.werkzaamheden||''), datum:addDays(todayISO(),1) });
+    }));
     el.querySelectorAll('[data-verwerkt-werkbon]').forEach(b=>{
       b.addEventListener('click', ()=> toggleVerwerkt('Werkbonnen', werkbonnen.find(w=>w.id===b.dataset.verwerktWerkbon), loadWerkbonnen));
     });
@@ -815,10 +901,12 @@
   formTodo.addEventListener('submit', async e=>{
     e.preventDefault();
     const fd = new FormData(formTodo);
-    const data = { id: uid(), tekst: fd.get('tekst'), status: fd.get('status'), prioriteit: fd.get('prioriteit'), deadline: fd.get('deadline') };
-    const btn = formTodo.querySelector('button'); busy(btn);
-    if(await apiPost({action:'add', tab:'Todos', data})){
-      toast('To-do toegevoegd'); formTodo.reset();
+    const data = { id: uid(), tekst: fd.get('tekst'), status: fd.get('status'), prioriteit: fd.get('prioriteit'), deadline: fd.get('deadline'), inAgenda: fd.get('inAgenda') ? 'Ja' : 'Nee' };
+    const btn = formTodo.querySelector('button[type=submit]'); busy(btn);
+    const res = await apiPost({action:'add', tab:'Todos', data});
+    if(res){
+      toast(res.waarschuwing ? res.waarschuwing : (data.deadline && data.inAgenda === 'Ja' ? 'To-do toegevoegd en in de agenda gezet' : 'To-do toegevoegd'));
+      formTodo.reset();
       document.querySelector('#form-todo [name=deadline]').value = '';
       await loadTodos();
     }
@@ -850,7 +938,7 @@
           <span class="status ${t.status==='Nog doen' ? 'vervolg' : ''}">${escapeHtml(t.status||'Nog doen')}</span>
         </div>
         <h3 style="${t.status==='Afgerond' ? 'text-decoration:line-through;' : ''}">${escapeHtml(t.tekst)}</h3>
-        ${t.deadline ? `<p class="field-label" style="${overdue ? 'color:var(--red);font-weight:700;' : ''}">Deadline: ${fmtDate(t.deadline)}${overdue ? ' — verlopen' : ''}</p>` : ''}
+        ${t.deadline ? `<p class="field-label" style="${overdue ? 'color:var(--red);font-weight:700;' : ''}">Deadline: ${fmtDate(t.deadline)}${overdue ? ' — verlopen' : ''}${t.agendaId ? ' · 📅 in agenda' : ''}</p>` : ''}
         ${t.bestand ? `<p>${fileLink(t)}</p>` : ''}
         <div class="row-actions">
           <select class="sans" data-status-todo="${t.id}" style="width:auto;padding:8px 10px;font-size:13px;">
@@ -875,10 +963,183 @@
     });
   }
 
+
+  // ===== AGENDA (Google Agenda "Heuvelrug") =====
+  const formAgenda = document.getElementById('form-agenda');
+  const agField = n => formAgenda.elements.namedItem(n);
+  let agendaItems = [], agendaLijst = [], agendaWeek = mondayOf(todayISO()), agendaError = '';
+
+  function agendaEmptyForm(){
+    formAgenda.reset();
+    delete formAgenda.dataset.editId;
+    agField('datum').value = todayISO();
+    agField('begin').value = '09:00'; agField('eind').value = '10:00';
+    toggleTijd();
+  }
+  function toggleTijd(){
+    const hele = agField('heleDag').checked;
+    formAgenda.querySelectorAll('[data-tijd]').forEach(el=> el.style.display = hele ? 'none' : '');
+  }
+  agField('heleDag').addEventListener('change', toggleTijd);
+
+  function openAgendaForm(v, editId){
+    agendaEmptyForm();
+    v = v || {};
+    agField('soort').value = v.soort || 'Inmeten';
+    agField('klant').value = v.klant || '';
+    agField('datum').value = v.datum || todayISO();
+    agField('heleDag').checked = !!v.heleDag;
+    if(v.begin) agField('begin').value = v.begin;
+    if(v.eind) agField('eind').value = v.eind;
+    agField('locatie').value = v.locatie || '';
+    agField('omschrijving').value = v.omschrijving || '';
+    agField('agendaId').value = v.agendaId || '';
+    if(agField('agendaId').value !== (v.agendaId || '')) agField('agendaId').value = '';
+    agField('agendaId').disabled = !!editId;   // een bestaande afspraak verhuist niet naar een andere agenda
+    if(editId) formAgenda.dataset.editId = editId;
+    document.getElementById('agenda-form-title').textContent = editId ? 'Afspraak wijzigen' : 'Nieuwe afspraak';
+    document.getElementById('agenda-save').textContent = editId ? 'Wijzigingen opslaan' : 'Afspraak opslaan';
+    toggleTijd();
+    formAgenda.style.display = 'block';
+    document.querySelector('nav.tabs button[data-tab=agenda]').click();
+    formAgenda.scrollIntoView({behavior:'smooth'});
+  }
+  function closeAgendaForm(){ agendaEmptyForm(); formAgenda.style.display = 'none'; }
+
+  document.getElementById('agenda-new').addEventListener('click', ()=> openAgendaForm({}));
+  document.getElementById('agenda-cancel').addEventListener('click', closeAgendaForm);
+  document.getElementById('week-prev').addEventListener('click', ()=>{ agendaWeek = addDays(agendaWeek,-7); loadAgenda(); });
+  document.getElementById('week-next').addEventListener('click', ()=>{ agendaWeek = addDays(agendaWeek,7); loadAgenda(); });
+  document.getElementById('week-today').addEventListener('click', ()=>{ agendaWeek = mondayOf(todayISO()); loadAgenda(); });
+
+  formAgenda.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const hele = agField('heleDag').checked;
+    const data = { soort: agField('soort').value, klant: agField('klant').value.trim(), datum: agField('datum').value, heleDag: hele,
+      begin: hele ? '' : agField('begin').value, eind: hele ? '' : agField('eind').value,
+      locatie: agField('locatie').value.trim(), omschrijving: agField('omschrijving').value.trim(),
+      agendaId: agField('agendaId').value };
+    if(!hele && data.begin && data.eind && data.eind <= data.begin){ toast('De eindtijd moet na de begintijd liggen'); return; }
+    const editId = formAgenda.dataset.editId || '';
+    const btn = document.getElementById('agenda-save'); busy(btn);
+    const res = await apiPost(editId ? {action:'update', tab:'Agenda', id:editId, data} : {action:'add', tab:'Agenda', data});
+    idle(btn);
+    if(res){
+      toast(editId ? 'Afspraak gewijzigd' : 'Afspraak in je agenda gezet');
+      closeAgendaForm();
+      agendaWeek = mondayOf(data.datum);   // spring naar de week van de afspraak, zodat je hem ziet
+      await loadAgenda();
+    }
+  });
+
+  async function loadAgenda(){
+    if(!SCRIPT_URL) return;
+    const el = document.getElementById('list-agenda');
+    el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>';
+    try{
+      try{
+        const lijst = await (await fetch(SCRIPT_URL + '?tab=Agendas')).json();
+        if(Array.isArray(lijst)) agendaLijst = lijst;
+      }catch(e){}
+      const res = await fetch(SCRIPT_URL + '?tab=Agenda&van=' + agendaWeek + '&tot=' + addDays(agendaWeek,6));
+      const data = await res.json();
+      if(Array.isArray(data)){ agendaItems = data; agendaError = ''; }
+      else {
+        agendaItems = [];
+        const msg = data && data.error ? String(data.error) : 'onbekende fout';
+        agendaError = /onbekend tabblad/.test(msg)
+          ? 'De agenda-koppeling is nog niet actief. Werk het Google-script bij (nieuwe Code.gs plakken, "setup" uitvoeren en een nieuwe versie implementeren).'
+          : 'Agenda laden mislukt: ' + msg;
+      }
+    }catch(err){ agendaItems = []; agendaError = 'Agenda laden mislukt — controleer je verbinding.'; }
+    renderAgenda();
+  }
+
+  function agendaTijd(ev){
+    if(ev.heleDag) return 'Hele dag' + (ev.eindDatum && ev.eindDatum !== ev.datum ? ' · t/m ' + dagKort(ev.eindDatum) : '');
+    return ev.begin + ' – ' + ev.eind + (ev.eindDatum && ev.eindDatum !== ev.datum ? ' (t/m ' + dagKort(ev.eindDatum) + ')' : '');
+  }
+  function renderAgenda(){
+    const el = document.getElementById('list-agenda');
+    const end = addDays(agendaWeek,6);
+    document.getElementById('week-label').textContent = 'Week ' + isoWeek(agendaWeek) + ' · ' + dagKort(agendaWeek) + ' – ' + dagKort(end);
+    // keuzelijst in het formulier + legenda
+    const kies = document.getElementById('agenda-kies');
+    const huidig = kies.value;
+    kies.innerHTML = agendaLijst.length
+      ? agendaLijst.map(a => `<option value="${a.eigen ? '' : escapeHtml(a.id)}">${escapeHtml(a.eigen ? 'Heuvelrug' : a.naam)}</option>`).join('')
+      : '<option value="">Heuvelrug</option>';
+    kies.value = huidig;
+    document.getElementById('agenda-legend').innerHTML = agendaLijst.length > 1
+      ? agendaLijst.map(a => `<span><i style="background:${a.eigen ? 'var(--mango)' : '#9aa8b8'}"></i>${escapeHtml(a.eigen ? 'Heuvelrug' : a.naam)}</span>`).join('') : '';
+    if(agendaError){ el.innerHTML = '<div class="agenda-error">' + escapeHtml(agendaError) + '</div>'; return; }
+    const today = todayISO();
+    let html = '';
+    for(let i=0;i<7;i++){
+      const dag = addDays(agendaWeek,i);
+      const items = agendaItems.filter(ev => ev.datum <= dag && (ev.eindDatum || ev.datum) >= dag)
+        .sort((a,b)=> (a.heleDag===b.heleDag ? (a.begin||'').localeCompare(b.begin||'') : (a.heleDag ? -1 : 1)));
+      html += `<div class="day-head ${dag===today ? 'today' : ''}"><span>${DAGEN[parseISO(dag).getDay()]} ${dagKort(dag)}${dag===today ? '<span class="today-tag">Vandaag</span>' : ''}</span><button type="button" data-add-day="${dag}">+ Afspraak</button></div>`;
+      if(!items.length){ html += '<div class="day-empty">Geen afspraken</div>'; continue; }
+      html += items.map(ev => {
+        const meerdaags = ev.eindDatum && ev.eindDatum !== ev.datum;
+        return `
+        <div class="list-item agenda-item ${ev.eigen === false ? 'other' : ''}">
+          <div class="meta"><span class="agenda-time">${escapeHtml(agendaTijd(ev))}</span><span class="status">${escapeHtml(ev.eigen === false ? 'Agenda' : (ev.soort||'Overig'))}</span></div>
+          <h3>${escapeHtml(ev.titel)}</h3>
+          ${ev.eigen === false ? `<p class="field-label">📆 ${escapeHtml(ev.agendaNaam||'')}</p>` : ''}
+          ${ev.locatie ? `<p class="field-label">📍 <a class="file-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.locatie)}" target="_blank" rel="noopener">${escapeHtml(ev.locatie)}</a></p>` : ''}
+          ${ev.omschrijving ? `<p class="field-label">${escapeHtml(ev.omschrijving)}</p>` : ''}
+          ${meerdaags ? '<p class="field-label">Meerdaagse afspraak — wijzigen kan in Google Agenda.</p>' : ''}
+          <div class="row-actions">
+            ${ev.soort==='Inmeten' ? `<button class="btn gold small" data-ag-inmeten="${escapeHtml(ev.id)}">Inmeting invullen</button>` : ''}
+            ${ev.soort==='Werkbon' ? `<button class="btn gold small" data-ag-werkbon="${escapeHtml(ev.id)}">Werkbon invullen</button>` : ''}
+            ${ev.soort==='Offerte' ? `<button class="btn gold small" data-ag-offerte="${escapeHtml(ev.id)}">Offerte invullen</button>` : ''}
+            ${meerdaags ? '' : `<button class="btn secondary small" data-ag-edit="${escapeHtml(ev.id)}">Wijzigen</button>`}
+            <button class="btn danger small" data-ag-del="${escapeHtml(ev.id)}">Verwijderen</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    el.innerHTML = html;
+    const find = id => agendaItems.find(x=>x.id===id);
+    el.querySelectorAll('[data-add-day]').forEach(b=> b.addEventListener('click', ()=> openAgendaForm({datum:b.dataset.addDay})));
+    el.querySelectorAll('[data-ag-edit]').forEach(b=> b.addEventListener('click', ()=>{
+      const ev = find(b.dataset.agEdit);
+      openAgendaForm({soort:ev.soort, klant:ev.klant, datum:ev.datum, heleDag:ev.heleDag, begin:ev.begin, eind:ev.eind, locatie:ev.locatie, omschrijving:ev.omschrijving, agendaId: ev.eigen === false ? ev.agendaId : ''}, ev.id);
+    }));
+    el.querySelectorAll('[data-ag-del]').forEach(b=> b.addEventListener('click', async ()=>{
+      if(!confirm('Afspraak verwijderen? Hij verdwijnt ook uit Google Agenda.')) return;
+      const ev = find(b.dataset.agDel);
+      if(await apiPost({action:'delete', tab:'Agenda', id:ev.id, agendaId: ev.eigen === false ? ev.agendaId : ''})){ toast('Afspraak verwijderd'); await loadAgenda(); }
+    }));
+    // Vanuit een afspraak direct het juiste formulier invullen (klant, adres en datum komen mee)
+    const prefill = (form, ev) => {
+      form.elements.namedItem('klant').value = ev.klant || '';
+      form.elements.namedItem('adres').value = ev.locatie || '';
+      form.elements.namedItem('datum').value = ev.datum;
+    };
+    el.querySelectorAll('[data-ag-inmeten]').forEach(b=> b.addEventListener('click', ()=>{
+      prefill(formInmeten, find(b.dataset.agInmeten));
+      document.querySelector('nav.tabs button[data-tab=inmeten]').click();
+      toast('Klant en adres zijn alvast ingevuld');
+    }));
+    el.querySelectorAll('[data-ag-werkbon]').forEach(b=> b.addEventListener('click', ()=>{
+      prefill(formWerkbon, find(b.dataset.agWerkbon));
+      document.querySelector('nav.tabs button[data-tab=werkbonnen]').click();
+      toast('Klant en adres zijn alvast ingevuld');
+    }));
+    el.querySelectorAll('[data-ag-offerte]').forEach(b=> b.addEventListener('click', ()=>{
+      prefill(formOfferte, find(b.dataset.agOfferte));
+      document.querySelector('nav.tabs button[data-tab=offertes]').click();
+      toast('Klant en adres zijn alvast ingevuld');
+    }));
+  }
+
   async function loadAll(){
     if(!SCRIPT_URL) return;
     document.querySelectorAll('#list-offertes,#list-werkbonnen,#list-km,#list-uren,#list-todos,#list-inmeten').forEach(el=> el.innerHTML = '<div class="empty"><span class="spin"></span>Laden…</div>');
-    await Promise.all([loadOffertes(), loadWerkbonnen(), loadKm(), loadUren(), loadTodos(), loadInmeten()]);
+    await Promise.all([loadOffertes(), loadWerkbonnen(), loadKm(), loadUren(), loadTodos(), loadInmeten(), loadAgenda()]);
   }
 
   loadAll();
